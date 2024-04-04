@@ -1,0 +1,34 @@
+FROM nvidia/cuda:11.8.0-cudnn8-runtime-ubuntu22.04
+
+ARG FACEFUSION_VERSION=2.4.1
+ENV GRADIO_SERVER_NAME=0.0.0.0
+ENV PYTHONUNBUFFERED=TRUE
+ENV PYTHONDONTWRITEBYTECODE=TRUE
+ENV PATH="/opt/program:${PATH}"
+
+
+WORKDIR /opt/program
+
+COPY facefusion /opt/program
+
+
+RUN apt-get update
+RUN apt-get install python3.10 -y
+RUN apt-get install python-is-python3 -y
+RUN apt-get install pip -y
+RUN apt-get install git -y
+RUN apt-get install curl -y
+RUN apt-get install ffmpeg -y
+RUN pip install asgiref
+RUN apt-get install nginx -y  
+RUN pip install --no-cache-dir boto3 flask gunicorn
+# for debug only
+RUN pip install sagemaker_ssh_helper
+
+RUN python install.py --torch cuda --onnxruntime cuda 
+WORKDIR /opt/program
+RUN chmod 755 serve
+ENTRYPOINT ["python"]
+
+# serve is a python script under code/ directory that launches nginx and gunicorn processes
+CMD [ "serve" ]
